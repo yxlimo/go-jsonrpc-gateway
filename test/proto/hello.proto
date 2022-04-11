@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/yxlimo/go-jsonrpc-gateway/test/proto";
+
+service Greet {
+  // hello request
+  rpc Hello(HelloRequest) returns (HelloResponse) {}
+
+  rpc SendMyGift(SendMyGiftRequest) returns (SendMyGiftResponse) {}
+
+  rpc Hello2(HelloRequest) returns (HelloResponse) {}
+
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string name = 2;
+}
+
+
+message SendMyGiftRequest {
+  int32 gift_id = 1;
+  string gift_name = 2;
+}
+
+message SendMyGiftResponse {
+}
+

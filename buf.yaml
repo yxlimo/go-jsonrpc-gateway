@@ -1,0 +1,6 @@
+version: v1
+name: buf.build/yxlimo/jsonrpc-gateway
+deps:
+lint:
+  use:
+    - DEFAULT
