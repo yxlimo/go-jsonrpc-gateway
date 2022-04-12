@@ -100,7 +100,7 @@ func RegisterGreetJSONRPCHandler(ctx context.Context, mux *jsonrpc.ServeMux, con
 // "GreetClient" to call the correct interceptors.
 func RegisterGreetJSONRPCHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, client GreetClient) error {
 
-	mux.Register("Greet.Hello", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
+	mux.Register("Hello", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var err error
@@ -121,7 +121,7 @@ func RegisterGreetJSONRPCHandlerClient(ctx context.Context, mux *jsonrpc.ServeMu
 
 	})
 
-	mux.Register("Greet.SendMyGift", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
+	mux.Register("SendMyGift", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var err error
@@ -142,7 +142,7 @@ func RegisterGreetJSONRPCHandlerClient(ctx context.Context, mux *jsonrpc.ServeMu
 
 	})
 
-	mux.Register("Greet.Hello2", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
+	mux.Register("Hello2", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var err error

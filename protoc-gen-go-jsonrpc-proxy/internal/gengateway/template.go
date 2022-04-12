@@ -164,7 +164,7 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}(ctx context.Context, mux *
 func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context, mux *jsonrpc.ServeMux, client {{$svc.InstanceName}}Client) error {
 	{{range $m := $svc.Methods}}
 	{{if and (not $m.GetServerStreaming) (not $m.GetClientStreaming)}}
-	mux.Register("{{$svc.GetName}}.{{$m.GetName}}", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
+	mux.Register("{{$m.GetName}}", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var err error

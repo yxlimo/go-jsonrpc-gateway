@@ -62,6 +62,9 @@ func (s *ServeMux) RuntimeMux() *runtime.ServeMux {
 }
 
 func (s *ServeMux) Register(method string, handler HandleFunc) {
+	if _, ok := s.handlers[method]; ok {
+		panic("duplicate handler for " + method)
+	}
 	s.handlers[method] = handler
 }
 
