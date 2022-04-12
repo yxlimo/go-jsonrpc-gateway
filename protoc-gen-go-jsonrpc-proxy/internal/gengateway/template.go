@@ -67,7 +67,7 @@ func applyTemplate(p param, reg *descriptor.Registry) (string, error) {
 
 	tp := trailerParams{
 		Services:           targetServices,
-		RegisterFuncSuffix: "Handler",
+		RegisterFuncSuffix: "JSONRPCHandler",
 	}
 
 	if err := trailerTemplate.Execute(w, tp); err != nil {
@@ -103,11 +103,13 @@ var _ = jsonrpc.NewHTTPServerConn
 `))
 
 	handlerTemplate = template.Must(template.New("handler").Parse(`
+{{if and (not .Method.GetServerStreaming) (not .Method.GetClientStreaming)}}
 {{template "client-rpc-request-func" .}}
+{{end}}
 `))
 
 	_ = template.Must(handlerTemplate.New("request-func-signature").Parse(strings.Replace(`
-func request_{{.Method.Service.GetName}}_{{.Method.GetName}}(ctx context.Context, marshaler runtime.Marshaler, client {{.Method.Service.InstanceName}}Client, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error)
+func request_{{.Method.Service.GetName}}_{{.Method.GetName}}_jsonrpc(ctx context.Context, marshaler runtime.Marshaler, client {{.Method.Service.InstanceName}}Client, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error)
 `, "\n", "", -1)))
 
 	_ = template.Must(handlerTemplate.New("client-rpc-request-func").Parse(`
@@ -161,6 +163,7 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}(ctx context.Context, mux *
 // "{{$svc.InstanceName}}Client" to call the correct interceptors.
 func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context, mux *jsonrpc.ServeMux, client {{$svc.InstanceName}}Client) error {
 	{{range $m := $svc.Methods}}
+	{{if and (not $m.GetServerStreaming) (not $m.GetClientStreaming)}}
 	mux.Register("{{$svc.GetName}}.{{$m.GetName}}", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -169,7 +172,7 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 		if err != nil {
 			return nil, ctx, err
 		}
-		resp, md, err := request_{{$svc.GetName}}_{{$m.GetName}}(ctx, marshaller, client, rawBody)
+		resp, md, err := request_{{$svc.GetName}}_{{$m.GetName}}_jsonrpc(ctx, marshaller, client, rawBody)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			return nil, ctx, err
@@ -181,6 +184,7 @@ func Register{{$svc.GetName}}{{$.RegisterFuncSuffix}}Client(ctx context.Context,
 		return rawResp, ctx, nil
 
 	})
+	{{end}}
 	{{end}}
 	return nil
 }

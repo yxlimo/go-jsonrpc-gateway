@@ -10,3 +10,11 @@ func WithMarshalerOption(marshaler runtime.Marshaler) ServeMuxOption {
 		s.marshaller = marshaler
 	}
 }
+
+func wWithGatewayRuntimeOptions(opts ...runtime.ServeMuxOption) ServeMuxOption {
+	return func(s *ServeMux) {
+		for _, opt := range opts {
+			opt(s.mux)
+		}
+	}
+}

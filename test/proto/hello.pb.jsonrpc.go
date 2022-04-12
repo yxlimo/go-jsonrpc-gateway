@@ -32,7 +32,7 @@ var _ = metadata.Join
 var _ = json.Marshal
 var _ = jsonrpc.NewHTTPServerConn
 
-func request_Greet_Hello(ctx context.Context, marshaler runtime.Marshaler, client GreetClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
+func request_Greet_Hello_jsonrpc(ctx context.Context, marshaler runtime.Marshaler, client GreetClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq HelloRequest
 	var metadata runtime.ServerMetadata
 	if err := marshaler.NewDecoder(bytes.NewReader(raw)).Decode(&protoReq); err != nil && err != io.EOF {
@@ -42,7 +42,7 @@ func request_Greet_Hello(ctx context.Context, marshaler runtime.Marshaler, clien
 	return msg, metadata, err
 }
 
-func request_Greet_SendMyGift(ctx context.Context, marshaler runtime.Marshaler, client GreetClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
+func request_Greet_SendMyGift_jsonrpc(ctx context.Context, marshaler runtime.Marshaler, client GreetClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq SendMyGiftRequest
 	var metadata runtime.ServerMetadata
 	if err := marshaler.NewDecoder(bytes.NewReader(raw)).Decode(&protoReq); err != nil && err != io.EOF {
@@ -52,7 +52,7 @@ func request_Greet_SendMyGift(ctx context.Context, marshaler runtime.Marshaler, 
 	return msg, metadata, err
 }
 
-func request_Greet_Hello2(ctx context.Context, marshaler runtime.Marshaler, client GreetClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
+func request_Greet_Hello2_jsonrpc(ctx context.Context, marshaler runtime.Marshaler, client GreetClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq HelloRequest
 	var metadata runtime.ServerMetadata
 	if err := marshaler.NewDecoder(bytes.NewReader(raw)).Decode(&protoReq); err != nil && err != io.EOF {
@@ -62,9 +62,9 @@ func request_Greet_Hello2(ctx context.Context, marshaler runtime.Marshaler, clie
 	return msg, metadata, err
 }
 
-// RegisterGreetHandlerFromEndpoint is same as RegisterGreetHandler but
+// RegisterGreetJSONRPCHandlerFromEndpoint is same as RegisterGreetJSONRPCHandler but
 // automatically dials to "endpoint" and closes the connection when "ctx" gets done.
-func RegisterGreetHandlerFromEndpoint(ctx context.Context, mux *jsonrpc.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+func RegisterGreetJSONRPCHandlerFromEndpoint(ctx context.Context, mux *jsonrpc.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
 	conn, err := grpc.Dial(endpoint, opts...)
 	if err != nil {
 		return err
@@ -84,21 +84,21 @@ func RegisterGreetHandlerFromEndpoint(ctx context.Context, mux *jsonrpc.ServeMux
 		}()
 	}()
 
-	return RegisterGreetHandler(ctx, mux, conn)
+	return RegisterGreetJSONRPCHandler(ctx, mux, conn)
 }
 
-// RegisterGreetHandler registers the http handlers for service Greet to "mux".
+// RegisterGreetJSONRPCHandler registers the http handlers for service Greet to "mux".
 // The handlers forward requests to the grpc endpoint over "conn".
-func RegisterGreetHandler(ctx context.Context, mux *jsonrpc.ServeMux, conn *grpc.ClientConn) error {
-	return RegisterGreetHandlerClient(ctx, mux, NewGreetClient(conn))
+func RegisterGreetJSONRPCHandler(ctx context.Context, mux *jsonrpc.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterGreetJSONRPCHandlerClient(ctx, mux, NewGreetClient(conn))
 }
 
-// RegisterGreetHandlerClient registers the http handlers for service Greet
+// RegisterGreetJSONRPCHandlerClient registers the http handlers for service Greet
 // to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "GreetClient".
 // Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "GreetClient"
 // doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
 // "GreetClient" to call the correct interceptors.
-func RegisterGreetHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, client GreetClient) error {
+func RegisterGreetJSONRPCHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, client GreetClient) error {
 
 	mux.Register("Greet.Hello", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
 		ctx, cancel := context.WithCancel(req.Context())
@@ -108,7 +108,7 @@ func RegisterGreetHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, clie
 		if err != nil {
 			return nil, ctx, err
 		}
-		resp, md, err := request_Greet_Hello(ctx, marshaller, client, rawBody)
+		resp, md, err := request_Greet_Hello_jsonrpc(ctx, marshaller, client, rawBody)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			return nil, ctx, err
@@ -129,7 +129,7 @@ func RegisterGreetHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, clie
 		if err != nil {
 			return nil, ctx, err
 		}
-		resp, md, err := request_Greet_SendMyGift(ctx, marshaller, client, rawBody)
+		resp, md, err := request_Greet_SendMyGift_jsonrpc(ctx, marshaller, client, rawBody)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			return nil, ctx, err
@@ -150,7 +150,7 @@ func RegisterGreetHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, clie
 		if err != nil {
 			return nil, ctx, err
 		}
-		resp, md, err := request_Greet_Hello2(ctx, marshaller, client, rawBody)
+		resp, md, err := request_Greet_Hello2_jsonrpc(ctx, marshaller, client, rawBody)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			return nil, ctx, err
