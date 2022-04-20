@@ -53,7 +53,6 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 	for _, opt := range opts {
 		opt(mux)
 	}
-
 	return mux
 }
 
@@ -69,53 +68,40 @@ func (s *ServeMux) Register(method string, handler HandleFunc) {
 }
 
 func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	_ = s.mux.HandlePath("GET", "/**", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-		http.Error(w, "GET method not allowed", http.StatusMethodNotAllowed)
+	if code, err := validateRequest(r); err != nil {
+		http.Error(w, err.Error(), code)
+		return
+	}
+	codec := NewHTTPServerConn(r, w, s.marshaller)
+	msg, isBatch, err := codec.readBatch()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	if isBatch {
+		http.Error(w, "batch request not supported", http.StatusBadRequest)
+		return
+	}
+	h, ok := s.handlers[msg[0].Method]
+	if !ok {
+		httpErrorHandler(r.Context(), s, s.marshaller, w, msg[0], status.New(codes.Unimplemented, "method not implemented").Err())
+		return
+	}
+	resp, newCtx, err := h(r, s.marshaller, msg[0].Params)
+	if err != nil {
+		httpErrorHandler(newCtx, s, s.marshaller, w, msg[0], err)
+		return
+	}
+	byes, err := s.marshaller.Marshal(resp)
+	if err != nil {
+		httpErrorHandler(newCtx, s, s.marshaller, w, msg[0], err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = codec.writeJSON(newCtx, &jsonrpcMessage{
+		Version: "2.0",
+		ID:      msg[0].ID,
+		Method:  msg[0].Method,
+		Result:  byes,
 	})
-	_ = s.mux.HandlePath("PUT", "/**", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-		http.Error(w, "PUT method not allowed", http.StatusMethodNotAllowed)
-	})
-	_ = s.mux.HandlePath("DELETE", "/**", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-		http.Error(w, "DELETE method not allowed", http.StatusMethodNotAllowed)
-	})
-	_ = s.mux.HandlePath("POST", "/**", func(w http.ResponseWriter, r *http.Request, _ map[string]string) {
-		if status, err := ValidateRequest(r); err != nil {
-			http.Error(w, err.Error(), status)
-			return
-		}
-		codec := NewHTTPServerConn(r, w, s.marshaller)
-		msg, isBatch, err := codec.readBatch()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if isBatch {
-			http.Error(w, "batch request not supported", http.StatusBadRequest)
-			return
-		}
-		h, ok := s.handlers[msg[0].Method]
-		if !ok {
-			httpErrorHandler(r.Context(), s, s.marshaller, w, msg[0], status.New(codes.Unimplemented, "method not implemented").Err())
-			return
-		}
-		resp, newCtx, err := h(r, s.marshaller, msg[0].Params)
-		if err != nil {
-			httpErrorHandler(newCtx, s, s.marshaller, w, msg[0], err)
-			return
-		}
-		byes, err := s.marshaller.Marshal(resp)
-		if err != nil {
-			httpErrorHandler(newCtx, s, s.marshaller, w, msg[0], err)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = codec.writeJSON(newCtx, &jsonrpcMessage{
-			Version: "2.0",
-			ID:      msg[0].ID,
-			Method:  msg[0].Method,
-			Result:  byes,
-		})
-	})
-
-	s.mux.ServeHTTP(w, r)
 }

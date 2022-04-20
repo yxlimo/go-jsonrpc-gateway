@@ -47,10 +47,10 @@ func (t *httpServerConn) RemoteAddr() string {
 // SetWriteDeadline does nothing and always returns nil.
 func (t *httpServerConn) SetWriteDeadline(time.Time) error { return nil }
 
-// ValidateRequest ret[urns a non-zero response code and error message if the
+// validateRequest ret[urns a non-zero response code and error message if the
 // request is invalid.]
-func ValidateRequest(r *http.Request) (int, error) {
-	if r.Method == http.MethodPut || r.Method == http.MethodDelete {
+func validateRequest(r *http.Request) (int, error) {
+	if r.Method == http.MethodPut || r.Method == http.MethodDelete || r.Method == http.MethodGet {
 		return http.StatusMethodNotAllowed, errors.New("method not allowed")
 	}
 	if r.ContentLength > maxRequestContentLength {
@@ -125,7 +125,7 @@ func httpErrorHandler(ctx context.Context, mux *ServeMux, marshaler runtime.Mars
 		grpclog.Infof("Failed to extract ServerMetadata from context")
 	}
 
-	handleForwardResponseServerMetadata(w, mux, md)
+	handleForwardResponseServerMetadata(w, md)
 
 	st := runtime.HTTPStatusFromCode(s.Code())
 	if customStatus != nil {
@@ -139,7 +139,7 @@ func httpErrorHandler(ctx context.Context, mux *ServeMux, marshaler runtime.Mars
 
 }
 
-func handleForwardResponseServerMetadata(w http.ResponseWriter, mux *ServeMux, md runtime.ServerMetadata) {
+func handleForwardResponseServerMetadata(w http.ResponseWriter, md runtime.ServerMetadata) {
 	outgoingHeaderMatcher := func(key string) (string, bool) {
 		return fmt.Sprintf("%s%s", runtime.MetadataHeaderPrefix, key), true
 	}
