@@ -7,6 +7,7 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
+	emptypb "google.golang.org/protobuf/types/known/emptypb"
 )
 
 // This is a compile-time assertion to ensure that this generated file
@@ -166,6 +167,90 @@ var Greet_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Hello2",
 			Handler:    _Greet_Hello2_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "test/proto/hello.proto",
+}
+
+// AnotherServiceWithNoBindingsClient is the client API for AnotherServiceWithNoBindings service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type AnotherServiceWithNoBindingsClient interface {
+	NoBindings(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
+}
+
+type anotherServiceWithNoBindingsClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewAnotherServiceWithNoBindingsClient(cc grpc.ClientConnInterface) AnotherServiceWithNoBindingsClient {
+	return &anotherServiceWithNoBindingsClient{cc}
+}
+
+func (c *anotherServiceWithNoBindingsClient) NoBindings(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/proto.AnotherServiceWithNoBindings/NoBindings", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// AnotherServiceWithNoBindingsServer is the server API for AnotherServiceWithNoBindings service.
+// All implementations should embed UnimplementedAnotherServiceWithNoBindingsServer
+// for forward compatibility
+type AnotherServiceWithNoBindingsServer interface {
+	NoBindings(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
+}
+
+// UnimplementedAnotherServiceWithNoBindingsServer should be embedded to have forward compatible implementations.
+type UnimplementedAnotherServiceWithNoBindingsServer struct {
+}
+
+func (UnimplementedAnotherServiceWithNoBindingsServer) NoBindings(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NoBindings not implemented")
+}
+
+// UnsafeAnotherServiceWithNoBindingsServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to AnotherServiceWithNoBindingsServer will
+// result in compilation errors.
+type UnsafeAnotherServiceWithNoBindingsServer interface {
+	mustEmbedUnimplementedAnotherServiceWithNoBindingsServer()
+}
+
+func RegisterAnotherServiceWithNoBindingsServer(s grpc.ServiceRegistrar, srv AnotherServiceWithNoBindingsServer) {
+	s.RegisterService(&AnotherServiceWithNoBindings_ServiceDesc, srv)
+}
+
+func _AnotherServiceWithNoBindings_NoBindings_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AnotherServiceWithNoBindingsServer).NoBindings(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/proto.AnotherServiceWithNoBindings/NoBindings",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AnotherServiceWithNoBindingsServer).NoBindings(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// AnotherServiceWithNoBindings_ServiceDesc is the grpc.ServiceDesc for AnotherServiceWithNoBindings service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var AnotherServiceWithNoBindings_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "proto.AnotherServiceWithNoBindings",
+	HandlerType: (*AnotherServiceWithNoBindingsServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "NoBindings",
+			Handler:    _AnotherServiceWithNoBindings_NoBindings_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

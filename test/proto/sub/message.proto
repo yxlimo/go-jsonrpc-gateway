@@ -1,0 +1,7 @@
+syntax = "proto2";
+option go_package = "github.com/yxlimo/go-jsonrpc-gateway/test/proto/sub";
+package jsonrpc.gateway.test.proto.sub;
+
+message StringMessage {
+  required string value = 1;
+}

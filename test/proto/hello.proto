@@ -4,6 +4,9 @@ package proto;
 
 option go_package = "github.com/yxlimo/go-jsonrpc-gateway/test/proto";
 
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+
 service Greet {
   // hello request
   rpc Hello(HelloRequest) returns (HelloResponse) {}
@@ -14,13 +17,27 @@ service Greet {
 
 }
 
+service AnotherServiceWithNoBindings {
+  rpc NoBindings(google.protobuf.Empty) returns (google.protobuf.Empty) {}
+}
+
 message HelloRequest {
   string name = 1;
+  google.protobuf.StringValue strVal = 2;
+  google.protobuf.FloatValue floatVal = 3;
+  google.protobuf.DoubleValue doubleVal = 4;
+  google.protobuf.BoolValue boolVal = 5;
+  google.protobuf.BytesValue bytesVal = 6;
+  google.protobuf.Int32Value int32Val = 7;
+  google.protobuf.UInt32Value uint32Val = 8;
+  google.protobuf.Int64Value int64Val = 9;
+  google.protobuf.UInt64Value uint64Val = 10;
 }
 
 message HelloResponse {
-  string name = 2;
+  string message = 1;
 }
+
 
 
 message SendMyGiftRequest {

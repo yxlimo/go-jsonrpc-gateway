@@ -1,0 +1,1 @@
+{"openapi":"3.0.0","info":{"title":"test/proto/sub2/message.proto","description":"","version":"0.0.1"},"paths":{},"components":{"schemas":{"sub2.IdMessage":{"type":"object","properties":{"uuid":{"type":"string"}}}}}}

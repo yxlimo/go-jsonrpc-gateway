@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/emptypb"
 )
 
 // Suppress "imported and not used" errors
@@ -59,6 +60,16 @@ func request_Greet_Hello2_jsonrpc(ctx context.Context, marshaler runtime.Marshal
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	msg, err := client.Hello2(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+}
+
+func request_AnotherServiceWithNoBindings_NoBindings_jsonrpc(ctx context.Context, marshaler runtime.Marshaler, client AnotherServiceWithNoBindingsClient, raw json.RawMessage) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq emptypb.Empty
+	var metadata runtime.ServerMetadata
+	if err := marshaler.NewDecoder(bytes.NewReader(raw)).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	msg, err := client.NoBindings(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 }
 
@@ -151,6 +162,68 @@ func RegisterGreetJSONRPCHandlerClient(ctx context.Context, mux *jsonrpc.ServeMu
 			return nil, ctx, err
 		}
 		resp, md, err := request_Greet_Hello2_jsonrpc(ctx, marshaller, client, rawBody)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			return nil, ctx, err
+		}
+		rawResp, err := marshaller.Marshal(resp)
+		if err != nil {
+			return nil, ctx, err
+		}
+		return rawResp, ctx, nil
+
+	})
+
+	return nil
+}
+
+// RegisterAnotherServiceWithNoBindingsJSONRPCHandlerFromEndpoint is same as RegisterAnotherServiceWithNoBindingsJSONRPCHandler but
+// automatically dials to "endpoint" and closes the connection when "ctx" gets done.
+func RegisterAnotherServiceWithNoBindingsJSONRPCHandlerFromEndpoint(ctx context.Context, mux *jsonrpc.ServeMux, endpoint string, opts []grpc.DialOption) (err error) {
+	conn, err := grpc.Dial(endpoint, opts...)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err != nil {
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+			return
+		}
+		go func() {
+			<-ctx.Done()
+			if cerr := conn.Close(); cerr != nil {
+				grpclog.Infof("Failed to close conn to %s: %v", endpoint, cerr)
+			}
+		}()
+	}()
+
+	return RegisterAnotherServiceWithNoBindingsJSONRPCHandler(ctx, mux, conn)
+}
+
+// RegisterAnotherServiceWithNoBindingsJSONRPCHandler registers the http handlers for service AnotherServiceWithNoBindings to "mux".
+// The handlers forward requests to the grpc endpoint over "conn".
+func RegisterAnotherServiceWithNoBindingsJSONRPCHandler(ctx context.Context, mux *jsonrpc.ServeMux, conn *grpc.ClientConn) error {
+	return RegisterAnotherServiceWithNoBindingsJSONRPCHandlerClient(ctx, mux, NewAnotherServiceWithNoBindingsClient(conn))
+}
+
+// RegisterAnotherServiceWithNoBindingsJSONRPCHandlerClient registers the http handlers for service AnotherServiceWithNoBindings
+// to "mux". The handlers forward requests to the grpc endpoint over the given implementation of "AnotherServiceWithNoBindingsClient".
+// Note: the gRPC framework executes interceptors within the gRPC handler. If the passed in "AnotherServiceWithNoBindingsClient"
+// doesn't go through the normal gRPC flow (creating a gRPC client etc.) then it will be up to the passed in
+// "AnotherServiceWithNoBindingsClient" to call the correct interceptors.
+func RegisterAnotherServiceWithNoBindingsJSONRPCHandlerClient(ctx context.Context, mux *jsonrpc.ServeMux, client AnotherServiceWithNoBindingsClient) error {
+
+	mux.Register("NoBindings", func(req *http.Request, marshaller runtime.Marshaler, rawBody json.RawMessage) (json.RawMessage, context.Context, error) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		var err error
+		ctx, err = runtime.AnnotateContext(ctx, mux.RuntimeMux(), req, "/proto.AnotherServiceWithNoBindings/NoBindings")
+		if err != nil {
+			return nil, ctx, err
+		}
+		resp, md, err := request_AnotherServiceWithNoBindings_NoBindings_jsonrpc(ctx, marshaller, client, rawBody)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			return nil, ctx, err

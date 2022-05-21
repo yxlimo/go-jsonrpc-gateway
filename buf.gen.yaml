@@ -12,3 +12,7 @@ plugins:
     out: .
     opt:
       - paths=source_relative
+  - name: jsonrpc-openapiv3
+    out: .
+    opt:
+      - paths=source_relative

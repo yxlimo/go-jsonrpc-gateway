@@ -1,0 +1,7 @@
+syntax = "proto3";
+option go_package = "github.com/yxlimo/go-jsonrpc-gateway/test/proto/sub2";
+package jsonrpc.gateway.test.proto.sub2;
+
+message IdMessage {
+  string uuid = 1;
+}
