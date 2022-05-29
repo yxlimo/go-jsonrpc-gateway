@@ -14,19 +14,21 @@ type Openapi struct {
 	base *pgs.ModuleBase
 	ctx  pgsgo.Context
 
-	schemas        map[string]*openapiSchemaObject
-	paths          map[string]*openapiPathObject
-	importMessages map[string]pgs.Message
-	msgTypes       map[string]string
+	schemas          map[string]*openapiSchemaObject
+	paths            map[string]*openapiPathObject
+	importMessages   map[string]pgs.Message
+	importMessageGen map[string]bool
+	msgTypes         map[string]string
 }
 
 func New() *Openapi {
 	return &Openapi{
-		base:           &pgs.ModuleBase{},
-		schemas:        make(map[string]*openapiSchemaObject),
-		paths:          make(map[string]*openapiPathObject),
-		msgTypes:       make(map[string]string),
-		importMessages: make(map[string]pgs.Message),
+		base:             &pgs.ModuleBase{},
+		schemas:          make(map[string]*openapiSchemaObject),
+		paths:            make(map[string]*openapiPathObject),
+		msgTypes:         make(map[string]string),
+		importMessages:   make(map[string]pgs.Message),
+		importMessageGen: make(map[string]bool),
 	}
 }
 
@@ -50,9 +52,11 @@ func (s *Openapi) generate(file pgs.File) {
 	s.registerImports(file.Imports())
 	s.registerMessageTypes(file.AllMessages())
 	for _, message := range file.AllMessages() {
+		s.base.Debugf("gen message: %s", message.FullyQualifiedName())
 		s.schemas[s.messageRefName(message.FullyQualifiedName())] = s.genMessage(message)
 	}
 	for _, service := range file.Services() {
+		s.base.Debugf("gen service: %s", service.FullyQualifiedName())
 		for _, method := range service.Methods() {
 			s.paths["/"+method.Name().LowerSnakeCase().String()] = s.genMethod(method)
 		}
@@ -199,7 +203,9 @@ func (s *Openapi) genSchemaFromFieldProtoType(field pgs.Field, typ pgs.ProtoType
 }
 
 func (s *Openapi) genImportSchemaIfExist(fqn string) {
-	if msg, exist := s.importMessages[fqn]; exist {
+	// message is imported message and not generated yet
+	if msg, exist := s.importMessages[fqn]; exist && !s.importMessageGen[s.messageRefName(msg.FullyQualifiedName())] {
+		s.importMessageGen[s.messageRefName(msg.FullyQualifiedName())] = true
 		s.schemas[s.messageRefName(msg.FullyQualifiedName())] = s.genMessage(msg)
 	}
 }

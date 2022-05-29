@@ -1,0 +1,14 @@
+syntax = "proto3";
+option go_package = "github.com/yxlimo/go-jsonrpc-gateway/test/proto/recursive-reference";
+package jsonrpc.gateway.test.proto.recursive_reference;
+
+
+message Foo {
+  string id = 1;
+  repeated Bar bars = 2;
+}
+
+message Bar {
+  string bar_id = 1;
+  Foo foo = 2;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+option go_package = "github.com/yxlimo/go-jsonrpc-gateway/test/proto/recursive-reference";
+package jsonrpc.gateway.test.proto.recursive_reference;
+
+import "test/proto/recursive-reference/recursive.proto";
+
+
+service Recursive {
+  rpc RecursiveCall(FooRequest) returns (FooResponse) {}
+}
+
+message FooRequest {
+  string id = 1;
+}
+
+message FooResponse {
+  repeated Foo foo = 1;
+}
