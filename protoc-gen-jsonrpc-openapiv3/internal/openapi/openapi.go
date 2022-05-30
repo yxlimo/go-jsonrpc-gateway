@@ -14,21 +14,23 @@ type Openapi struct {
 	base *pgs.ModuleBase
 	ctx  pgsgo.Context
 
-	schemas          map[string]*openapiSchemaObject
-	paths            map[string]*openapiPathObject
-	importMessages   map[string]pgs.Message
-	importMessageGen map[string]bool
-	msgTypes         map[string]string
+	schemas              map[string]*openapiSchemaObject
+	paths                map[string]*openapiPathObject
+	importMessages       map[string]pgs.Message
+	importMessageGen     map[string]bool
+	msgTypes             map[string]string
+	registeredImportFile map[string]bool
 }
 
 func New() *Openapi {
 	return &Openapi{
-		base:             &pgs.ModuleBase{},
-		schemas:          make(map[string]*openapiSchemaObject),
-		paths:            make(map[string]*openapiPathObject),
-		msgTypes:         make(map[string]string),
-		importMessages:   make(map[string]pgs.Message),
-		importMessageGen: make(map[string]bool),
+		base:                 &pgs.ModuleBase{},
+		schemas:              make(map[string]*openapiSchemaObject),
+		paths:                make(map[string]*openapiPathObject),
+		msgTypes:             make(map[string]string),
+		importMessages:       make(map[string]pgs.Message),
+		importMessageGen:     make(map[string]bool),
+		registeredImportFile: make(map[string]bool),
 	}
 }
 
@@ -77,12 +79,17 @@ func (s *Openapi) generate(file pgs.File) {
 
 func (s *Openapi) registerImports(imports []pgs.File) {
 	for _, file := range imports {
+		if s.registeredImportFile[file.FullyQualifiedName()] {
+			return
+		}
+		s.registeredImportFile[file.FullyQualifiedName()] = true
 		s.base.Debugf("registering imports: %s", file.InputPath().String())
 		for _, msg := range file.AllMessages() {
 			s.base.Debugf("registering import message: %s", msg.FullyQualifiedName())
 			s.importMessages[msg.FullyQualifiedName()] = msg
 			s.msgTypes[msg.FullyQualifiedName()] = msg.FullyQualifiedName()
 		}
+		s.registerImports(file.Imports())
 	}
 }
 
