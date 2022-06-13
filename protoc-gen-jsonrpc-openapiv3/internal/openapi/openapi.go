@@ -79,10 +79,10 @@ func (s *Openapi) generate(file pgs.File) {
 
 func (s *Openapi) registerImports(imports []pgs.File) {
 	for _, file := range imports {
-		if s.registeredImportFile[file.FullyQualifiedName()] {
+		if s.registeredImportFile[file.InputPath().String()] {
 			return
 		}
-		s.registeredImportFile[file.FullyQualifiedName()] = true
+		s.registeredImportFile[file.InputPath().String()] = true
 		s.base.Debugf("registering imports: %s", file.InputPath().String())
 		for _, msg := range file.AllMessages() {
 			s.base.Debugf("registering import message: %s", msg.FullyQualifiedName())
